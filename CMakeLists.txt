@@ -1,0 +1,13 @@
+cmake_minimum_required(VERSION 3.21)
+project(Search)
+
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+SET(BIN_NAME "run")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DPROJ_PATH=\"\\\"${PROJECT_SOURCE_DIR}\\\"\"")
+
+
+INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/src)
+INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/include)
+
+FILE(GLOB_RECURSE sourcefiles "src/*.cpp")
+ADD_EXECUTABLE(${BIN_NAME} debug.cpp ${sourcefiles})
