@@ -41,7 +41,7 @@ namespace Search {
             for (auto &i: vec) {
                 seed ^= i + 0x9e3779b9 + (seed << 6) + (seed >> 2);
             }
-            return seed;;
+            return seed;
         }
     };
 
@@ -54,9 +54,10 @@ namespace Search {
             State state;
             Cost cost;
             uint depth;
+            Cost g;
 
             bool operator<(const Node &node) const {
-                return cost < node.cost;
+                return cost > node.cost;
             }
         };
 
@@ -111,7 +112,7 @@ namespace Search {
 
         Option<State> breadthFirstSearch() {
             clear();
-            auto makeNode = [](const State &parent, const State &state) { return Node{parent, state, 0, 0}; };
+            auto makeNode = [](const State &parent, const State &state) { return Node{parent, state, 0, 0, 0}; };
             State state = startState;
             Node node = makeNode(state, state);
             nodeMap.insert({state, node});
@@ -144,7 +145,7 @@ namespace Search {
 
         Option<State> depthFirstSearch() {
             clear();
-            auto makeNode = [](const State &parent, const State &state) { return Node{parent, state, 0, 0}; };
+            auto makeNode = [](const State &parent, const State &state) { return Node{parent, state, 0, 0, 0}; };
             State state = startState;
             Node node = makeNode(state, state);
             nodeMap.insert({state, node});
@@ -178,7 +179,7 @@ namespace Search {
         Option<State> uniformCostSearch() {
             clear();
             State state = startState;
-            Node node{state, state, 0, 0};
+            Node node{state, state, 0, 0, 0};
             nodeMap.insert({state, node});
             priorityQueue.push(node);
             do {
@@ -199,7 +200,7 @@ namespace Search {
                 for (const Action &action: actions) {
                     State child = transferState(state, action);
                     if (nodeMap.find(child) == nodeMap.end()) {
-                        Node childNode{state, child, g(state, action), node.depth + 1};
+                        Node childNode{state, child, g(state, action), node.depth + 1, g(state, action)};
                         nodeMap.insert({child, childNode});
                         priorityQueue.push(childNode);
                     }
@@ -210,7 +211,7 @@ namespace Search {
         Option<State> greedySearch() {
             clear();
             State state = startState;
-            Node node{state, state, 0, 0};
+            Node node{state, state, 0, 0, 0};
             nodeMap.insert({state, node});
             priorityQueue.push(node);
             do {
@@ -231,7 +232,7 @@ namespace Search {
                 for (const Action &action: actions) {
                     State child = transferState(state, action);
                     if (nodeMap.find(child) == nodeMap.end()) {
-                        Node childNode{state, child, h(child), node.depth + 1};
+                        Node childNode{state, child, h(child), node.depth + 1, 0};
                         nodeMap.insert({child, childNode});
                         priorityQueue.push(childNode);
                     }
@@ -242,7 +243,7 @@ namespace Search {
         Option<State> aStarSearch() {
             clear();
             State state = startState;
-            Node node{state, state, 0, 0};
+            Node node{state, state, 0, 0, 0};
             nodeMap.insert({state, node});
             priorityQueue.push(node);
             do {
@@ -263,7 +264,7 @@ namespace Search {
                 for (const Action &action: actions) {
                     State child = transferState(state, action);
                     if (nodeMap.find(child) == nodeMap.end()) {
-                        Node childNode{state, child, h(child) + g(state, action), node.depth + 1};
+                        Node childNode{state, child, h(child) + g(state, action), node.depth + 1, g(state, action)};
                         nodeMap.insert({child, childNode});
                         priorityQueue.push(childNode);
                     }

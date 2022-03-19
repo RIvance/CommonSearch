@@ -59,6 +59,18 @@ protected:
         std::cout << std::endl;
     }
 
+    Cost h(const State &state) const override {
+        Cost cost = 0;
+        for (uint i = 0; i < state.size(); i++) {
+            cost += abs(state[i] - targetState[i]);
+        }
+        return cost;
+    }
+
+    Cost g(const State &state, const Action &action) const override {
+        return nodeMap.at(state).g + 1;
+    }
+
 
 public:
     EightPuzzle(const State &start, State target) : targetState(std::move(target)) {
@@ -72,7 +84,9 @@ public:
         }
         std::cout << "Path: " << std::endl;
         State state = *goalState;
+        int count = 0;
         do {
+            count++;
             printState(state);
             State parent = nodeMap.at(state).parent;
             if (parent == state) {
@@ -80,6 +94,7 @@ public:
             }
             state = parent;
         } while (true);
+        std::cout << "Total steps: " << count << std::endl;
     }
 
 };
@@ -95,6 +110,8 @@ int main() {
 //    problem.depthFirstSearch();
 //    problem.printPath();
 //    problem.uniformCostSearch();
+//    problem.printPath();
+//    problem.greedySearch();
 //    problem.printPath();
     problem.aStarSearch();
     problem.printPath();
