@@ -1,6 +1,14 @@
 cmake_minimum_required(VERSION 3.21)
 project(Search)
 
+SET(OPTIMIZE                   true)
+
+IF(OPTIMIZE)
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+ELSE()
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g")
+ENDIF()
+
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 SET(BIN_NAME "run")
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DPROJ_PATH=\"\\\"${PROJECT_SOURCE_DIR}\\\"\"")
