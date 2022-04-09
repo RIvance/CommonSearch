@@ -75,7 +75,7 @@ public class Problem<Action, Cost extends Comparable<Cost>> {
 
         while (!queue.isEmpty()) {
 
-            State<Action> state = queue.peek().state;
+            State<Action> state = queue.poll().state;
 
             if (isGoal.apply(state) && state.isValid()) {
                 return Optional.of(state);
