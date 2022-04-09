@@ -1,6 +1,8 @@
-//
-// Created by infinite on 19/03/2022.
-//
+/**
+ * @brief: This is the header file for the problem base class.
+ * @author: spanning-tree
+ * @date: 2022-4-10
+ */
 
 #ifndef SEARCH_SEARCH_HPP
 #define SEARCH_SEARCH_HPP
@@ -108,7 +110,7 @@ namespace Search {
 
             PriorityQueue<Node> priorityQueue;
         public:
-            void push(Node node) {
+            void push(const Node &node) {
                 if (type == 's') {
                     stack.push(node);
                 } else if (type == 'q') {

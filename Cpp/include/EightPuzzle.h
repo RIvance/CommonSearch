@@ -1,9 +1,14 @@
-//
-// Created by infinite on 19/03/2022.
-//
+/**
+ * @brief: This is a solution for a easy game: https://www.cs.princeton.edu/courses/archive/spr10/cos226/assignments/8puzzle.html
+ * @author: spanning-tree
+ * @date: 2022-4-10
+ */
 
 #ifndef SEARCH_EIGHTPUZZLE_H
 #define SEARCH_EIGHTPUZZLE_H
+
+#include "Search.hpp"
+
 namespace EightPuzzle {
     using namespace Search;
 
