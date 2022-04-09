@@ -185,7 +185,7 @@ public class Problem<Action, Cost extends Comparable<Cost>> {
                     State<Action> nextState = state.transfer(action);
                     if (visited.contains(nextState)) {
                         visited.add(nextState);
-                        Cost cost = heuristicFunction.apply(state);
+                        Cost cost = heuristicFunction.apply(nextState);
                         Node child = new Node(nextState, node.depth + 1, cost);
                         priorityQueue.offer(child);
                     }
@@ -224,7 +224,7 @@ public class Problem<Action, Cost extends Comparable<Cost>> {
 
                         Cost cost = costAddition.apply(
                             costFunction.apply(state, action),
-                            heuristicFunction.apply(state)
+                            heuristicFunction.apply(nextState)
                         );
 
                         Node child = new Node(nextState, node.depth + 1, cost);
