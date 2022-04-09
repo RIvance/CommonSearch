@@ -172,7 +172,7 @@ where
                     let next = state.transfer(&act);
                     if visited.contains(&next) {
                         visited.insert(next.clone());
-                        let next_node = Node(next.clone(), depth + 1, h(state.as_ref()));
+                        let next_node = Node(next.clone(), depth + 1, h(next.as_ref()));
                         heap.push(next_node);
                     }
                 });
@@ -223,7 +223,7 @@ where
                     let next = state.transfer(&act);
                     if visited.contains(&next) {
                         visited.insert(next.clone());
-                        let cost = g(state.as_ref(), act) + h(state.as_ref());
+                        let cost = g(state.as_ref(), act) + h(next.as_ref());
                         let next_node = Node(next.clone(), depth + 1, cost);
                         heap.push(next_node);
                     }
