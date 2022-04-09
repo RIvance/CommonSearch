@@ -10,30 +10,31 @@
 #include <stack>
 #include <unordered_map>
 #include <iostream>
+#include <functional>
 
 namespace Search {
 
-    template<typename T>
+    template<class T>
     using Vec = std::vector<T>;
 
-    template<typename T>
+    template<class T>
     using PriorityQueue = std::priority_queue<T>;
 
-    template<typename T>
+    template<class T>
     using Queue = std::queue<T>;
 
-    template<typename T>
+    template<class T>
     using Stack = std::stack<T>;
 
-    template<typename T1, typename T2, class Hash>
+    template<class T1, class T2, class Hash>
     using HashMap = std::unordered_map<T1, T2, Hash>;
 
-    template<typename T>
+    template<class T>
     using Option = std::optional<T>;
 
     using std::nullopt;
 
-    template<typename T>
+    template<class T>
     class [[maybe_unused]] HashCombine {
     public:
         uint operator()(Vec<T> const &vec) const {
@@ -46,9 +47,11 @@ namespace Search {
     };
 
 
-    template<typename State, typename Action, typename Cost = int, class Hash = std::hash<State>>
+    template<class State, class Action, class Cost = int, class Hash = std::hash<State>>
     class Problem {
     protected:
+        using CostFunction = std::function<Cost(const State &, const Action &, const State &)>;
+
         struct Node {
             State parent;
             State state;
@@ -81,14 +84,8 @@ namespace Search {
 
         void clear() {
             goalState = nullopt;
-            Stack<Node> empty1;
-            Queue<Node> empty2;
-            PriorityQueue<Node> empty3;
-            HashMap<State, Node, Hash> empty4;
-            std::swap(empty1, stack);
-            std::swap(empty2, queue);
-            std::swap(empty3, priorityQueue);
-            std::swap(empty4, nodeMap);
+            HashMap<State, Node, Hash> emptyMap;
+            std::swap(emptyMap, nodeMap);
         }
 
     protected:
@@ -96,14 +93,95 @@ namespace Search {
 
         Option<State> goalState;
 
-        Stack<Node> stack;
-
-        Queue<Node> queue;
-
-        PriorityQueue<Node> priorityQueue;
-
         HashMap<State, Node, Hash> nodeMap;
 
+        /**
+         * @brief a container for specific search algorithm
+         * @tparam type 's' represents stack, 'q' represents queue, 'p' represents priority queue
+         */
+        template<char type>
+        class Container {
+        private:
+            Stack<Node> stack;
+
+            Queue<Node> queue;
+
+            PriorityQueue<Node> priorityQueue;
+        public:
+            void push(Node node) {
+                if (type == 's') {
+                    stack.push(node);
+                } else if (type == 'q') {
+                    queue.push(node);
+                } else if (type == 'p') {
+                    priorityQueue.push(node);
+                }
+            }
+
+            void pop() {
+                if (type == 's') {
+                    stack.pop();
+                } else if (type == 'q') {
+                    queue.pop();
+                } else if (type == 'p') {
+                    priorityQueue.pop();
+                }
+            }
+
+            Node peek() {
+                if (type == 's') {
+                    return stack.top();
+                } else if (type == 'q') {
+                    return queue.front();
+                } else if (type == 'p') {
+                    return priorityQueue.top();
+                }
+            }
+
+            bool empty() {
+                if (type == 's') {
+                    return stack.empty();
+                } else if (type == 'q') {
+                    return queue.empty();
+                } else if (type == 'p') {
+                    return priorityQueue.empty();
+                }
+            }
+        };
+
+    protected:
+        template<char type>
+        Option<State> baseSearch(Container<type> container, CostFunction f, CostFunction g) {
+            clear();
+            State state = startState;
+            Node node{state, state, 0, 0, 0};
+            nodeMap.insert({state, node});
+            container.push(node);
+            do {
+                if (container.empty()) {
+                    return nullopt;
+                }
+                node = container.peek();
+                container.pop();
+                state = node.state;
+                if (!isValid(state)) {
+                    continue;
+                }
+                if (isGoal(state)) {
+                    goalState = state;
+                    return goalState;
+                }
+                Vec<Action> actions = getActions(state);
+                for (const Action &action: actions) {
+                    State childState = transferState(state, action);
+                    if (nodeMap.find(childState) == nodeMap.end()) {
+                        Node childNode{state, childState, f(state, action, childState), node.depth + 1, g(state, action, childState)};
+                        nodeMap.insert({childState, childNode});
+                        container.push(childNode);
+                    }
+                }
+            } while (true);
+        }
 
     public:
         void setStartState(const State &state) {
@@ -111,165 +189,68 @@ namespace Search {
         }
 
         Option<State> breadthFirstSearch() {
-            clear();
-            auto makeNode = [](const State &parent, const State &state) { return Node{parent, state, 0, 0, 0}; };
-            State state = startState;
-            Node node = makeNode(state, state);
-            nodeMap.insert({state, node});
-            queue.push(node);
-            do {
-                if (queue.empty()) {
-                    return nullopt;
-                }
-                node = queue.front();
-                queue.pop();
-                state = node.state;
-                if (isGoal(state)) {
-                    goalState = state;
-                    return goalState;
-                }
-                if (!isValid(state)) {
-                    continue;
-                }
-                Vec<Action> actions = getActions(state);
-                for (const Action &action: actions) {
-                    State child = transferState(state, action);
-                    if (nodeMap.find(child) == nodeMap.end()) {
-                        Node childNode = makeNode(state, child);
-                        nodeMap.insert({child, childNode});
-                        queue.push(childNode);
+            Container<'q'> container;
+            return baseSearch(
+                    container,
+                    [](const State &state, const Action &action, const State &childState) {
+                        return 0;
+                    },
+                    [](const State &state, const Action &action, const State &childState) {
+                        return 0;
                     }
-                }
-            } while (true);
+            );
         }
 
         Option<State> depthFirstSearch() {
-            clear();
-            auto makeNode = [](const State &parent, const State &state) { return Node{parent, state, 0, 0, 0}; };
-            State state = startState;
-            Node node = makeNode(state, state);
-            nodeMap.insert({state, node});
-            stack.push(node);
-            do {
-                if (stack.empty()) {
-                    return nullopt;
-                }
-                node = stack.top();
-                stack.pop();
-                state = node.state;
-                if (isGoal(state)) {
-                    goalState = state;
-                    return goalState;
-                }
-                if (!isValid(state)) {
-                    continue;
-                }
-                Vec<Action> actions = getActions(state);
-                for (const Action &action: actions) {
-                    State child = transferState(state, action);
-                    if (nodeMap.find(child) == nodeMap.end()) {
-                        Node childNode = makeNode(state, child);
-                        nodeMap.insert({child, childNode});
-                        stack.push(childNode);
+            Container<'s'> container;
+            return baseSearch(
+                    container,
+                    [](const State &state, const Action &action, const State &childState) {
+                        return 0;
+                    },
+                    [](const State &state, const Action &action, const State &childState) {
+                        return 0;
                     }
-                }
-            } while (true);
+            );
         }
 
         Option<State> uniformCostSearch() {
-            clear();
-            State state = startState;
-            Node node{state, state, 0, 0, 0};
-            nodeMap.insert({state, node});
-            priorityQueue.push(node);
-            do {
-                if (priorityQueue.empty()) {
-                    return nullopt;
-                }
-                node = priorityQueue.top();
-                priorityQueue.pop();
-                state = node.state;
-                if (isGoal(state)) {
-                    goalState = state;
-                    return goalState;
-                }
-                if (!isValid(state)) {
-                    continue;
-                }
-                Vec<Action> actions = getActions(state);
-                for (const Action &action: actions) {
-                    State child = transferState(state, action);
-                    if (nodeMap.find(child) == nodeMap.end()) {
-                        Node childNode{state, child, g(state, action), node.depth + 1, g(state, action)};
-                        nodeMap.insert({child, childNode});
-                        priorityQueue.push(childNode);
+            Container<'p'> container;
+            return baseSearch(
+                    container,
+                    [this](const State &state, const Action &action, const State &childState) {
+                        return this->g(state, action);
+                    },
+                    [this](const State &state, const Action &action, const State &childState) {
+                        return this->g(state, action);
                     }
-                }
-            } while (true);
+            );
         }
 
         Option<State> greedySearch() {
-            clear();
-            State state = startState;
-            Node node{state, state, 0, 0, 0};
-            nodeMap.insert({state, node});
-            priorityQueue.push(node);
-            do {
-                if (priorityQueue.empty()) {
-                    return nullopt;
-                }
-                node = priorityQueue.top();
-                priorityQueue.pop();
-                state = node.state;
-                if (isGoal(state)) {
-                    goalState = state;
-                    return goalState;
-                }
-                if (!isValid(state)) {
-                    continue;
-                }
-                Vec<Action> actions = getActions(state);
-                for (const Action &action: actions) {
-                    State child = transferState(state, action);
-                    if (nodeMap.find(child) == nodeMap.end()) {
-                        Node childNode{state, child, h(child), node.depth + 1, 0};
-                        nodeMap.insert({child, childNode});
-                        priorityQueue.push(childNode);
+            Container<'p'> container;
+            return baseSearch(
+                    container,
+                    [this](const State &state, const Action &action, const State &childState) {
+                        return this->h(childState);
+                    },
+                    [this](const State &state, const Action &action, const State &childState) {
+                        return 0;
                     }
-                }
-            } while (true);
+            );
         };
 
         Option<State> aStarSearch() {
-            clear();
-            State state = startState;
-            Node node{state, state, 0, 0, 0};
-            nodeMap.insert({state, node});
-            priorityQueue.push(node);
-            do {
-                if (priorityQueue.empty()) {
-                    return nullopt;
-                }
-                node = priorityQueue.top();
-                priorityQueue.pop();
-                state = node.state;
-                if (isGoal(state)) {
-                    goalState = state;
-                    return goalState;
-                }
-                if (!isValid(state)) {
-                    continue;
-                }
-                Vec<Action> actions = getActions(state);
-                for (const Action &action: actions) {
-                    State child = transferState(state, action);
-                    if (nodeMap.find(child) == nodeMap.end()) {
-                        Node childNode{state, child, h(child) + g(state, action), node.depth + 1, g(state, action)};
-                        nodeMap.insert({child, childNode});
-                        priorityQueue.push(childNode);
+            Container<'p'> container;
+            return baseSearch(
+                    container,
+                    [this](const State &state, const Action &action, const State &childState) {
+                        return this->g(state, action) + this->h(childState);
+                    },
+                    [this](const State &state, const Action &action, const State &childState) {
+                        return this->g(state, action);
                     }
-                }
-            } while (true);
+            );
         }
 
         virtual void printPath() const {
@@ -277,7 +258,7 @@ namespace Search {
                 std::cout << "Cannot access goal state" << std::endl;
                 return;
             }
-            std::cout << "Path: ";
+            std::cout << "Not implemented" << std::endl;
         }
     };
 
